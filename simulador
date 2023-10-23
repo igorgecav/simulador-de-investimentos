@@ -1,0 +1,59 @@
+# Bibliotecas necessárias
+library(ggplot2)
+
+# Função para calcular o rendimento de um investimento ao longo do tempo
+calcularRendimentoInvestimento <- function(valorInicial, taxaDeJuros, prazo, taxaDeAdmin, aliquotaIR) {
+  rendimento <- rep(NA, prazo)
+  rendimento[1] <- valorInicial
+  
+  for (i in 2:prazo) {
+    rendimento[i] <- rendimento[i - 1] * (1 + taxaDeJuros / 12) - taxaDeAdmin
+    rendimento[i] <- rendimento[i] - (rendimento[i] - rendimento[i - 1]) * aliquotaIR
+  }
+  return(rendimento)
+}
+
+# Parâmetros gerais
+patrimonioInicial <- 10000
+prazo <- 60  # 5 anos (60 meses)
+
+# Definindo os investimentos
+investimentos <- list(
+  cdi = list(
+    taxaDeJuros = 0.1315,  # 13.15% ao ano
+    taxaDeAdmin = 0,       # Sem taxa de administração
+    aliquotaIR = 0.15     # Alíquota de IR de 15%
+  ),
+  poupanca = list(
+    taxaDeJuros = 0.0617,  # 6.17% ao ano
+    taxaDeAdmin = 0,       # Sem taxa de administração
+    aliquotaIR = 0.15     # Alíquota de IR de 15%
+  ),
+  loko = list(
+    taxaDeJuros = 0.5,  # 13.15% ao ano
+    taxaDeAdmin = 0.02,       # Sem taxa de administração
+    aliquotaIR = 0.3     # Alíquota de IR de 15%
+  )
+)
+
+# Criando os dados para o gráfico
+dados_grafico <- data.frame(Tempo = 1:prazo)
+
+for (i in 1:length(investimentos)) {
+  investimento <- investimentos[[i]]
+  rendimento <- calcularRendimentoInvestimento(patrimonioInicial, investimento$taxaDeJuros, prazo, investimento$taxaDeAdmin, investimento$aliquotaIR)
+  dados_grafico[names(investimentos)[i]] <- rendimento
+}
+
+# Reformatar os dados para o gráfico de linhas
+dados_grafico_empilhado <- tidyr::gather(dados_grafico, Investimento, Rendimento, -Tempo)
+
+# Criar o gráfico de linhas
+grafico <- ggplot(dados_grafico_empilhado, aes(x = Tempo, y = Rendimento, color = Investimento)) +
+  geom_line(size = 2) +
+  labs(x = "Tempo (meses)", y = "Patrimônio", color = "Investimento") +
+  scale_color_brewer(palette = "Set1") +
+  ggtitle("Evolução do Patrimônio por Investimento")
+
+# Exibir o gráfico
+print(grafico)
